@@ -19,4 +19,4 @@ if int(list[2]) > 1024:
     sumMb = 0.79 * (int(list[2])-1024)
     print(f"начислено за доп интернет-трафик: {sumMb}")
 
-print(f"Всего начислено за месяц вам: {(sum + sumMb + sumMinute + sumSms)*1.02}")
+print(f"Всего начислено за месяц вам: {(sum + sumMb + sumMinute + sumSms)*1.02:.2f}")
