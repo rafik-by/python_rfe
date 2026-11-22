@@ -61,19 +61,16 @@ def parse_event_details(session: requests.Session, event_url: str) -> tuple[str,
         soup = BeautifulSoup(resp.text, "lxml")
         page_text = soup.get_text(" ", strip=True)
 
-        # 1. Ищем кинотеатр по ссылке на площадку
         place_link = soup.select_one(
             'a[href*="/places/"], a[href*="/place/"], a[href*="/cinemas/"], a[href*="/cinema/"]'
         )
         if place_link:
             venue = place_link.get_text(strip=True)
 
-        # 2. Ищем время сеанса формата ЧЧ:ММ
         time_match = re.search(r"\b([01]?\d|2[0-3]):[0-5]\d\b", page_text)
         if time_match:
             show_time = time_match.group(0)
 
-        # 3. Запасной вариант для цены и возраста прямо со страницы фильма
         price = extract_price(page_text)
         age = extract_age(page_text)
 
@@ -95,10 +92,10 @@ def parse_kino_afisha(limit: int | None = None) -> list[KinoEvent]:
     events: list[KinoEvent] = []
     seen_urls: set[str] = set()
 
-    # Ищем ссылки на конкретные фильмы (/ru/minsk/event/...)
+    
     links = soup.select('a[href*="/ru/minsk/event/"]')
 
-    # Сначала собираем уникальные карточки
+   
     unique_cards = []
     for link in links:
         href = link.get("href", "").split("?")[0]
@@ -114,14 +111,14 @@ def parse_kino_afisha(limit: int | None = None) -> list[KinoEvent]:
     print(f"Найдено уникальных фильмов: {len(unique_cards)}. Начинаю сбор данных...")
 
     for idx, (full_url, link) in enumerate(unique_cards, start=1):
-        # Поднимаемся к родителю, чтобы захватить всю карточку целиком
+        
         card = link.parent if link.parent else link
         card_text = card.get_text(" ", strip=True)
 
-        # Название фильма
+
         title_tag = card.find(["h2", "h3", "h4"]) or link
         title = title_tag.get_text(" ", strip=True)
-        # Если в тексте ссылки случайно нет названия (например, ссылка только на картинку)
+       
         if not title or len(title) < 2:
             title = full_url.rstrip("/").split("/")[-1]
 
@@ -135,7 +132,7 @@ def parse_kino_afisha(limit: int | None = None) -> list[KinoEvent]:
         )
         date_str = date_match.group(0) if date_match else "Сегодня"
 
-        # Второй уровень: заходим на страницу фильма за кинотеатром и временем
+       
         venue, show_time, detail_price, detail_age = parse_event_details(session, full_url)
         if price is None:
             price = detail_price
@@ -217,6 +214,5 @@ def save_report(events: list[KinoEvent], txt_path: str = "kino_report.txt", json
 
 
 if __name__ == "__main__":
-    # Сначала прогони с limit=5 для быстрой проверки, потом поменяй на limit=None
     kino_events = parse_kino_afisha(limit=None)
     save_report(kino_events)
